@@ -1,0 +1,459 @@
+
+BookStore.java:
+package com.anp.bookstore;
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Entity;
+
+@Entity//indicate that it is a JPA entity.
+@Table(name="BookStore")//creating table for BookStore
+public class BookStore {//creating class for BookStore
+	
+	@Id//indicates the primary key field.
+	@GeneratedValue(strategy = GenerationType.IDENTITY )//indicates the primary key field.
+	private int id;//indicates the primary key field.
+	
+	private String title;
+	
+	
+	@Column(name= "book_author")//specifies the name of the database table for the book_author entity.
+	private String author;
+	
+	
+	private String stock;
+	
+	private double price;
+	
+	public int getId() {
+		return id;
+	}
+//Getters and Setters, constructors  and implementing super method
+	
+	public BookStore(int id, String title, String author, String stock, double price) {
+		
+		super();//super method
+                this.id = id;
+		this.title = title;
+		this.author = author;
+		this.stock = stock;
+		this.price = price;
+		
+	}
+	public int getid() {
+		return id;
+	}
+	
+	
+	public void setId(int id) {
+		this.id = id;
+	}
+	
+	
+	public String getTitle() {
+		return title;
+	}
+	
+	public void setTitle(String title) {
+		this.title = title;
+	}
+	
+	public String getAuthor() {
+		return author;
+	}
+	
+	public void setAuthor(String author) {
+		this.author = author;
+	}
+	
+	public String getStock() {
+		return stock;
+	}
+	
+	public void setStock(String stock) {
+		this.stock = stock;
+	}
+	
+	public double getPrice() {
+		return price;
+	}
+	
+	
+	public void setPrice(double price) {
+		this.price = price;
+	}
+	
+	
+	
+	@Override
+	public String toString()//Java compiler internally invokes the toString() method on the object. So overriding the toString() method, returns the desired output, it can be the state of an object etc. depending on your implementation. 
+        {
+		return "BookStore [id=" + id + ", title=" + title + ", author=" + author + ", stock=" + stock + ", price=" + price
+				+ "]";
+	}
+	
+	public BookStore()
+//The super keyword in Java is a reference variable which is used to refer immediate parent class object.
+
+//Whenever you create the instance of subclass, an instance of parent class is created implicitly which is referred by super reference variable.
+ {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
+	}
+.....................................................................................................................................................................................
+BookMain.java:
+
+package com.anp.bookstore;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
+import java.util.List;
+import java.util.Optional;
+
+public class BookMain {
+
+    public static void main(String[] args) {
+        EntityManagerFactory factory = null;
+
+        try {//Risky lines of code we write in try block
+//creating entitymanagerfactory
+            factory = Persistence.createEntityManagerFactory("vk");
+            EntityManager em = factory.createEntityManager();
+
+            System.out.println("____WELCOME TO BOOK STORE___");
+
+           //Creating new objects for BookStore 
+            BookStore book1 = new BookStore(1, "Corejava", "James Gosling", "100", 700.0);
+            BookStore book2 = new BookStore(2, "Polity", "Lakhmikanth", "200", 800.0);
+            BookStore book3 = new BookStore(3, "Environment", "shankar", "300", 900.0);
+
+            //creating the Data Access Object Interface specifies the common operations to be carried out on a model object (s).
+            //Data Access Object patterns, often known as DAO patterns, are used to divide high level business services from low level data accessing APIs or actions.
+           
+            BookStoreDAO bookdao = new BookStoreDAO(em);
+            bookdao.save(book1);
+            bookdao.save(book2);
+            bookdao.save(book3);
+            System.out.println("BookStore is created successfully ");
+
+            //Defining these variables appropriately
+            int newid = 1;
+            String newtitle = "UpdatedTitle";
+            String newauthor = "UpdatedAuthor";
+            String newstock = "UpdatedStock";
+            double newprice = 1000.0;
+
+           //updating BookStore to the object bookdao
+            bookdao.updateBookStore(newid, newtitle, newauthor, newstock, newprice);
+            System.out.println("BookStore is updated successfully ");
+
+            System.out.println("--------------");
+
+            System.out.println("BookStore details based on id:");
+
+            Optional<BookStore> bookById = bookdao.findById(1);
+            //The findById() function is used to find a single document by its _id field. The _id field is cast based on the Schema before sending the command.
+            System.out.println(bookById);
+
+            System.out.println("------------");
+
+            System.out.println("Details of all the bookstore");
+            //As the name depicts, the findAll() method allows us to get or retrieve all the entities from the database table. It belongs to the CrudRepository interface defined by Spring Data.
+            List<BookStore> allBooks = bookdao.findAll();
+            System.out.println(allBooks);
+
+            System.out.println("Removing based on id:");
+            bookdao.remove(2);//removing based on id
+            System.out.println("2nd record is removed");
+        } catch (Exception e)//it handles the exceptions from try block {
+            e.printStackTrace();//The printStackTrace() method in Java is a tool used to handle exceptions and errors. It is a method of Java’s throwable class which prints the throwable along with other details like the line number and class name where the exception occurred.
+            System.out.println("Exception");
+        } finally {//Java finally block is always executed whether an exception is handled or not. Therefore, it contains all the necessary statements that need to be printed regardless of the exception occurs or not.
+            if (factory != null) {
+                factory.close();
+            }
+        }
+    }
+}
+
+...........................................................................................................................................................................................
+BookStoreDAO.java:
+
+package com.anp.bookstore;
+
+import jakarta.persistence.EntityManager;
+import java.util.List;
+import java.util.Optional;
+
+public class BookStoreDAO {
+//The EntityManager API is used to create and remove persistent entity instances, to find entities by their primary key, and to query over entities. The set of entities that can be managed by a given EntityManager instance is defined by a persistence unit.
+
+    private final EntityManager entityManager;
+
+    public BookStoreDAO(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
+    public void save(BookStore bookStore) {//In the context of database programming, the term "save method" usually refers to a method that is responsible for persisting or saving data into a database. This method is commonly used when working with an Object-Relational Mapping (ORM) framework, such as Hibernate, or when interacting with a database using Java's JDBC.
+        try {
+            entityManager.getTransaction().begin();//represents a point at which the data referenced by a connection is logically and physically consistent.
+            entityManager.persist(bookStore);//a set of operations that either fail or succeed as a unit. 
+            entityManager.getTransaction().commit();//commits the current transaction, making its changes permanent
+        }   
+        catch (Exception e) {
+            if (entityManager.getTransaction().isActive()) {//If you want to add an isActive column to your books table to track whether a book is active or not, 
+                entityManager.getTransaction().rollback();//If an exception occurs, transaction.rollback() is called to roll back the changes made during the transaction.
+            }
+            e.printStackTrace();
+        }
+    }
+
+//updating boostore
+    public void updateBookStore(int id, String title, String author, String stock, double price) {
+        try {
+            entityManager.getTransaction().begin();
+            BookStore bookStore = entityManager.find(BookStore.class, id);
+            if (bookStore != null) {
+                bookStore.setTitle(title);
+                bookStore.setAuthor(author);
+                bookStore.setStock(stock);
+                bookStore.setPrice(price);
+            }
+            entityManager.getTransaction().commit();
+        } catch (Exception e) {
+            if (entityManager.getTransaction().isActive()) {
+                entityManager.getTransaction().rollback();
+            }
+            e.printStackTrace();
+        }
+    }
+
+    public void remove(int id) {
+        try {
+            entityManager.getTransaction().begin();
+            BookStore bookStore = entityManager.find(BookStore.class, id);
+            if (bookStore != null) {
+                entityManager.remove(bookStore);
+            }
+            entityManager.getTransaction().commit();
+        } catch (Exception e) {
+            if (entityManager.getTransaction().isActive()) {
+                entityManager.getTransaction().rollback();
+            }
+            e.printStackTrace();
+        }
+    }
+
+    public Optional<BookStore> findById(int id) {
+        BookStore bookStore = entityManager.find(BookStore.class, id);
+        return Optional.ofNullable(bookStore);//Optional.ofNullable is a method provided by the java.util package in Java, specifically in the Optional class. It is a convenient way to create an Optional instance based on a possibly null value. This method is often used to handle cases where a value may or may not be present.
+    }
+
+    public List<BookStore> findAll() {
+        return entityManager.createQuery("from BookStore", BookStore.class).getResultList();//In the context of database programming, a ResultSet is an object in Java that represents the result set of a database query. When you execute a SQL query against a database, the result is returned as a ResultSet. The ResultSet object contains the data retrieved from the database, and you can iterate over it to access the individual rows and columns.
+    }
+}
+...........................................................................................................................................................................................
+BookStoreManagementSystem/pom.xml:
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.anp.bookstore</groupId>
+  <artifactId>BookStoreManagementSystem</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <dependencies>
+	  <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.23</version>
+</dependency>
+
+
+	<!-- https://mvnrepository.com/artifact/org.hibernate/hibernate-core -->
+<!-- https://mvnrepository.com/artifact/org.hibernate/hibernate-core -->
+<!-- https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-core -->
+<dependency>
+    <groupId>org.hibernate.orm</groupId>
+    <artifactId>hibernate-core</artifactId>
+    <version>6.3.2.Final</version>
+</dependency>
+
+<!-- https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api -->
+<dependency>
+    <groupId>jakarta.validation</groupId>
+    <artifactId>jakarta.validation-api</artifactId>
+    <version>3.0.2</version>
+</dependency>
+
+</dependencies>
+</project>
+.................................................................................................................................................................................................
+
+persistence.xml:
+
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.2" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
+<persistence-unit name="km">
+<class> 
+com.anp.bookstore</class>
+<properties>
+<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/BookStoreManagementSystem"/>
+<property name="javax.persistence.jdbc.user" value="root"/>
+<property name="javax.persistence.jdbc.password" value="kiranmai@123"/>
+<property name="javax.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
+<property name="hibernate.hbm2ddl.auto" value="update"/>
+<property name="hibernate.show_sql" value="true"/>
+<property name="hibernate.format_sql" value="true"/>
+</properties>
+</persistence-unit>
+</persistence>
+
+.............................................................................................................................................................................................
+MySql:
+mysql> select * from BookStore;
+ERROR 1146 (42S02): Table 'employeesystem.bookstore' doesn't exist
+mysql> use BookStoreManagementSystem;
+Database changed
+mysql> select * from BookStore;
++----+--------------+---------------+-------+-------+
+| id | title        | author        | stock | price |
++----+--------------+---------------+-------+-------+
+|  1 |  Corejava    | James Gosling | 100   | 700.0 |
+|  2 | Polity       | Lakhmikanth   | 200   | 800.0 |
+|  3 |  Environment | shankar       | 300   | 900.0 |
++----+--------------+---------------+-------+-------+
+3 rows in set (0.07 sec)
+
+mysql>
+.......................................................................................................................................................................................................
+BookStore output:
+
+Dec 01, 2023 9:47:26 AM org.hibernate.jpa.internal.util.LogHelper logPersistenceUnitInformation
+INFO: HHH000204: Processing PersistenceUnitInfo [name: km]
+Dec 01, 2023 9:47:26 AM org.hibernate.Version logVersion
+INFO: HHH000412: Hibernate ORM core version 6.3.2.Final
+Dec 01, 2023 9:47:26 AM org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl lambda$normalizeConnectionAccessUserAndPass$6
+WARN: HHH90000021: Encountered deprecated setting [javax.persistence.jdbc.user], use [jakarta.persistence.jdbc.user] instead
+Dec 01, 2023 9:47:26 AM org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl lambda$normalizeConnectionAccessUserAndPass$12
+WARN: HHH90000021: Encountered deprecated setting [javax.persistence.jdbc.password], use [jakarta.persistence.jdbc.password] instead
+Dec 01, 2023 9:47:26 AM org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl normalizeDataAccess
+WARN: HHH90000021: Encountered deprecated setting [javax.persistence.jdbc.url], use [jakarta.persistence.jdbc.url] instead
+Dec 01, 2023 9:47:26 AM org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl normalizeDataAccess
+WARN: HHH90000021: Encountered deprecated setting [javax.persistence.jdbc.driver], use [jakarta.persistence.jdbc.driver] instead
+Dec 01, 2023 9:47:26 AM org.hibernate.cache.internal.RegionFactoryInitiator initiateService
+INFO: HHH000026: Second-level cache disabled
+Dec 01, 2023 9:47:26 AM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl configure
+WARN: HHH10001002: Using built-in connection pool (not intended for production use)
+Dec 01, 2023 9:47:26 AM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl buildCreator
+INFO: HHH10001005: Loaded JDBC driver class: com.mysql.cj.jdbc.Driver
+Dec 01, 2023 9:47:26 AM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl buildCreator
+INFO: HHH10001012: Connecting with JDBC URL [jdbc:mysql://localhost:3306/BookStoreManagementSystem]
+Dec 01, 2023 9:47:26 AM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl buildCreator
+INFO: HHH10001001: Connection properties: {password=****, user=root}
+Dec 01, 2023 9:47:26 AM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl buildCreator
+INFO: HHH10001003: Autocommit mode: false
+Dec 01, 2023 9:47:26 AM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl$PooledConnections <init>
+INFO: HHH10001115: Connection pool size: 20 (min=1)
+Dec 01, 2023 9:47:28 AM org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator initiateService
+INFO: HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+Dec 01, 2023 9:47:28 AM org.hibernate.resource.transaction.backend.jdbc.internal.DdlTransactionIsolatorNonJtaImpl getIsolatedConnection
+INFO: HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@2251b3bc] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+____WELCOME TO BOOK STORE___
+jakarta.persistence.EntityExistsException: detached entity passed to persist: com.anp.bookstore.BookStore
+	at org.hibernate.internal.ExceptionConverterImpl.convert(ExceptionConverterImpl.java:126)
+	at org.hibernate.internal.ExceptionConverterImpl.convert(ExceptionConverterImpl.java:167)
+	at org.hibernate.internal.ExceptionConverterImpl.convert(ExceptionConverterImpl.java:173)
+	at org.hibernate.internal.SessionImpl.firePersist(SessionImpl.java:772)
+	at org.hibernate.internal.SessionImpl.persist(SessionImpl.java:750)
+	at com.anp.bookstore.BookStoreDAO.save(BookStoreDAO.java:18)
+	at com.anp.bookstore.BookMain.main(BookMain.java:24)
+Caused by: org.hibernate.PersistentObjectException: detached entity passed to persist: com.anp.bookstore.BookStore
+	at org.hibernate.event.internal.DefaultPersistEventListener.persist(DefaultPersistEventListener.java:88)
+	at org.hibernate.event.internal.DefaultPersistEventListener.onPersist(DefaultPersistEventListener.java:77)
+	at org.hibernate.event.internal.DefaultPersistEventListener.onPersist(DefaultPersistEventListener.java:54)
+	at org.hibernate.event.service.internal.EventListenerGroupImpl.fireEventOnEachListener(EventListenerGroupImpl.java:127)
+	at org.hibernate.internal.SessionImpl.firePersist(SessionImpl.java:766)
+	... 3 more
+jakarta.persistence.EntityExistsException: detached entity passed to persist: com.anp.bookstore.BookStore
+	at org.hibernate.internal.ExceptionConverterImpl.convert(ExceptionConverterImpl.java:126)
+	at org.hibernate.internal.ExceptionConverterImpl.convert(ExceptionConverterImpl.java:167)
+	at org.hibernate.internal.ExceptionConverterImpl.convert(ExceptionConverterImpl.java:173)
+	at org.hibernate.internal.SessionImpl.firePersist(SessionImpl.java:772)
+	at org.hibernate.internal.SessionImpl.persist(SessionImpl.java:750)
+	at com.anp.bookstore.BookStoreDAO.save(BookStoreDAO.java:18)
+	at com.anp.bookstore.BookMain.main(BookMain.java:25)
+Caused by: org.hibernate.PersistentObjectException: detached entity passed to persist: com.anp.bookstore.BookStore
+	at org.hibernate.event.internal.DefaultPersistEventListener.persist(DefaultPersistEventListener.java:88)
+	at org.hibernate.event.internal.DefaultPersistEventListener.onPersist(DefaultPersistEventListener.java:77)
+	at org.hibernate.event.internal.DefaultPersistEventListener.onPersist(DefaultPersistEventListener.java:54)
+	at org.hibernate.event.service.internal.EventListenerGroupImpl.fireEventOnEachListener(EventListenerGroupImpl.java:127)
+	at org.hibernate.internal.SessionImpl.firePersist(SessionImpl.java:766)
+	... 3 more
+jakarta.persistence.EntityExistsException: detached entity passed to persist: com.anp.bookstore.BookStore
+	at org.hibernate.internal.ExceptionConverterImpl.convert(ExceptionConverterImpl.java:126)
+	at org.hibernate.internal.ExceptionConverterImpl.convert(ExceptionConverterImpl.java:167)
+	at org.hibernate.internal.ExceptionConverterImpl.convert(ExceptionConverterImpl.java:173)
+	at org.hibernate.internal.SessionImpl.firePersist(SessionImpl.java:772)
+	at org.hibernate.internal.SessionImpl.persist(SessionImpl.java:750)
+	at com.anp.bookstore.BookStoreDAO.save(BookStoreDAO.java:18)
+	at com.anp.bookstore.BookMain.main(BookMain.java:26)
+Caused by: org.hibernate.PersistentObjectException: detached entity passed to persist: com.anp.bookstore.BookStore
+	at org.hibernate.event.internal.DefaultPersistEventListener.persist(DefaultPersistEventListener.java:88)
+	at org.hibernate.event.internal.DefaultPersistEventListener.onPersist(DefaultPersistEventListener.java:77)
+	at org.hibernate.event.internal.DefaultPersistEventListener.onPersist(DefaultPersistEventListener.java:54)
+	at org.hibernate.event.service.internal.EventListenerGroupImpl.fireEventOnEachListener(EventListenerGroupImpl.java:127)
+	at org.hibernate.internal.SessionImpl.firePersist(SessionImpl.java:766)
+	... 3 more
+BookStore is created successfully 
+Hibernate: 
+    select
+        bs1_0.id,
+        bs1_0.book_author,
+        bs1_0.price,
+        bs1_0.stock,
+        bs1_0.title 
+    from
+        BookStore bs1_0 
+    where
+        bs1_0.id=?
+BookStore is updated successfully 
+--------------
+BookStore details based on id:
+Optional[BookStore [id=1, title=UpdatedTitle, author=UpdatedAuthor, stock=UpdatedStock, price=1000.0]]
+------------
+Details of all the bookstore
+Hibernate: 
+    select
+        bs1_0.id,
+        bs1_0.book_author,
+        bs1_0.price,
+        bs1_0.stock,
+        bs1_0.title 
+    from
+        BookStore bs1_0
+[BookStore [id=1, title=UpdatedTitle, author=UpdatedAuthor, stock=UpdatedStock, price=1000.0], BookStore [id=3, title= Environment, author=null, stock=300, price=900.0]]
+Removing based on id:
+Hibernate: 
+    select
+        bs1_0.id,
+        bs1_0.book_author,
+        bs1_0.price,
+        bs1_0.stock,
+        bs1_0.title 
+    from
+        BookStore bs1_0 
+    where
+        bs1_0.id=?
+2nd record is removed
+Dec 01, 2023 9:47:29 AM org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl$PoolState stop
+INFO: HHH10001008: Cleaning up connection pool [jdbc:mysql://localhost:3306/BookStoreManagementSystem]
+
+.........................................................................................................................................
+
+
+
+
